@@ -1,0 +1,183 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
+
+const inputArg = process.argv[2]
+const source = inputArg
+  ? path.resolve(inputArg)
+  : path.join(os.homedir(), 'Downloads', '256OrchestralSamples')
+
+const projectRoot = path.resolve(import.meta.dirname, '..')
+const outputRoot = path.join(projectRoot, 'public', 'samples')
+
+if (!fs.existsSync(source)) {
+  console.error('\nERROR: I cannot find the VSCO folder here:')
+  console.error(source)
+  console.error('\nRun this command again and put your folder path in quotes, for example:')
+  console.error('node tools/import-vsco256.mjs "C:\\Users\\YOURNAME\\Downloads\\256OrchestralSamples"\n')
+  process.exit(1)
+}
+
+function walk(dir) {
+  const out=[]
+  for(const ent of fs.readdirSync(dir,{withFileTypes:true})) {
+    const p=path.join(dir,ent.name)
+    if(ent.isDirectory()) out.push(...walk(p))
+    else if(ent.isFile() && ent.name.toLowerCase().endsWith('.wav')) out.push(p)
+  }
+  return out
+}
+
+const files=walk(source)
+console.log(`Found ${files.length} WAV files.`)
+
+const instrumentRules = {
+  violin: [
+    /llvln/i, /vlnens/i, /violin/i, /(?:^|[_ -])vln(?:[_ -]|$)/i
+  ],
+  viola: [
+    /violaens/i, /viola/i, /(?:^|[_ -])vla(?:[_ -]|$)/i
+  ],
+  cello: [
+    /celloens/i, /cello/i, /(?:^|[_ -])vc(?:[_ -]|$)/i, /(?:^|[_ -])vcl(?:[_ -]|$)/i
+  ],
+  piano: [
+    /piano/i, /upright/i, /(?:^|[_ -])pno(?:[_ -]|$)/i
+  ],
+  flute: [
+    /flute/i, /(?:^|[_ -])fl(?:[_ -]|$)/i
+  ],
+  clarinet: [
+    /clarinet/i, /clar/i, /(?:^|[_ -])cl(?:[_ -]|$)/i
+  ],
+  oboe: [
+    /oboe/i, /(?:^|[_ -])ob(?:[_ -]|$)/i
+  ],
+  horn: [
+    /fhorn/i, /f horn/i, /horn/i, /(?:^|[_ -])fhn(?:[_ -]|$)/i
+  ],
+  bassoon: [
+    /bassoon/i, /(?:^|[_ -])bsn(?:[_ -]|$)/i
+  ],
+  trumpet: [
+    /trumpet/i, /(?:^|[_ -])tpt(?:[_ -]|$)/i
+  ],
+  trombone: [
+    /trombone/i, /tbnens/i, /(?:^|[_ -])tbn(?:[_ -]|$)/i
+  ],
+  tuba: [
+    /tuba/i
+  ],
+  harp: [
+    /harp/i
+  ]
+}
+
+function classify(name) {
+  for(const [instrument,rules] of Object.entries(instrumentRules)) {
+    if(rules.some(r=>r.test(name))) return instrument
+  }
+  return null
+}
+
+function parsePitch(name) {
+  // Finds pitches such as A3, C#4, Bb2.
+  // Prefer pitch-like tokens separated by punctuation/spaces.
+  const matches=[...name.matchAll(/(?:^|[^A-Za-z])([A-Ga-g])([#b]?)(-?\d)(?=[^0-9]|$)/g)]
+  if(!matches.length) return null
+  const m=matches[matches.length-1]
+  return `${m[1].toUpperCase()}${m[2] || ''}${m[3]}`
+}
+
+function score(name,instrument) {
+  const n=name.toLowerCase()
+  let s=0
+
+  // Sustains are best for this app.
+  if(/sus|sustain|arcovib|arco|susvib/.test(n)) s+=80
+  if(/vib/.test(n)) s+=20
+
+  // Prefer solo violin for the solo voice.
+  if(instrument==='violin' && /llvln/.test(n)) s+=40
+
+  // Medium/strong dynamic gives a useful source sample for browser gain control.
+  if(/(?:^|[_ -])(mf|f)(?:[_ .-]|$)/.test(n)) s+=12
+  if(/_v2|_v3/.test(n)) s+=6
+
+  // Avoid short articulations for the main sampler.
+  if(/stac|stacc|spic|pizz|trem|trill|fx|gliss/.test(n)) s-=100
+
+  return s
+}
+
+const grouped={}
+const unclassified=[]
+
+for(const f of files) {
+  const name=path.basename(f)
+  const instrument=classify(name)
+  const pitch=parsePitch(name)
+  if(!instrument || !pitch) {
+    unclassified.push(name)
+    continue
+  }
+  grouped[instrument] ??= {}
+  grouped[instrument][pitch] ??= []
+  grouped[instrument][pitch].push({path:f,name,score:score(name,instrument)})
+}
+
+fs.rmSync(outputRoot,{recursive:true,force:true})
+fs.mkdirSync(outputRoot,{recursive:true})
+
+const manifest={}
+const report=[]
+
+for(const instrument of Object.keys(instrumentRules)) {
+  const pitchGroups=grouped[instrument] || {}
+  const pitches=Object.keys(pitchGroups)
+
+  manifest[instrument]={}
+  const dest=path.join(outputRoot,instrument)
+  fs.mkdirSync(dest,{recursive:true})
+
+  for(const pitch of pitches) {
+    const candidates=pitchGroups[pitch].sort((a,b)=>b.score-a.score)
+    const best=candidates[0]
+    const safePitch=pitch.replace('#','s').replace('b','b')
+    const targetName=`${instrument}_${safePitch}.wav`
+    fs.copyFileSync(best.path,path.join(dest,targetName))
+    manifest[instrument][pitch]=targetName
+  }
+
+  report.push(`${instrument.padEnd(10)} ${String(pitches.length).padStart(3)} mapped pitches`)
+}
+
+fs.writeFileSync(
+  path.join(outputRoot,'sample-manifest.json'),
+  JSON.stringify(manifest,null,2)
+)
+
+fs.writeFileSync(
+  path.join(outputRoot,'IMPORT_REPORT.txt'),
+  [
+    'VSCO 256 IMPORT REPORT',
+    '======================',
+    `Source: ${source}`,
+    `Total WAV files found: ${files.length}`,
+    '',
+    ...report,
+    '',
+    `Unclassified/unpitched files: ${unclassified.length}`,
+    '',
+    'A few unclassified names:',
+    ...unclassified.slice(0,80)
+  ].join('\n')
+)
+
+console.log('\nImport finished.')
+console.log('-----------------------------------')
+for(const line of report) console.log(line)
+console.log('-----------------------------------')
+console.log(`\nManifest written to:\n${path.join(outputRoot,'sample-manifest.json')}`)
+console.log(`\nReport written to:\n${path.join(outputRoot,'IMPORT_REPORT.txt')}`)
+console.log('\nNow run: npm run dev\n')

@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orchestra / Gesture — User Guide V1.0</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#e9edf4;background:#05080d;line-height:1.58}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% 0,#121b2c,#05080d 38%,#020305)}
+a{color:#e1c371}
+code{background:#111925;padding:2px 5px;border-radius:3px}
+.wrap{display:grid;grid-template-columns:260px minmax(0,900px);gap:36px;max-width:1240px;margin:auto;padding:32px 24px 80px}
+nav{position:sticky;top:18px;align-self:start;background:rgba(8,13,22,.92);border:1px solid #1d2837;padding:18px;border-radius:7px}
+nav h2{font-size:13px;color:#e1c371;letter-spacing:.12em;margin:0 0 12px}
+nav a{display:block;color:#9da9ba;text-decoration:none;padding:5px 0;font-size:12px}
+nav a:hover{color:#fff}
+main{min-width:0}
+.hero{padding:28px;border:1px solid #273244;background:rgba(8,13,22,.78);border-radius:9px;margin-bottom:24px}
+.hero h1{font-size:38px;line-height:1.05;margin:0 0 8px;color:#f0d590}
+.kicker{font-size:11px;letter-spacing:.18em;color:#8290a4}
+.version{display:inline-block;margin-top:12px;border:1px solid #6e6038;color:#e0c87e;padding:4px 7px;border-radius:3px;font-size:11px}
+h2{margin-top:42px;padding-top:8px;color:#f0d590;border-bottom:1px solid #202b3a;padding-bottom:8px}
+h3{color:#c8d7e8;margin-top:26px}
+p,li{color:#b2bdcc}
+table{width:100%;border-collapse:collapse;margin:14px 0 22px;background:#090f18}
+th,td{border:1px solid #202b3a;padding:9px 10px;text-align:left;font-size:13px}
+th{color:#e8d18d;background:#0d1521}
+.note{border-left:3px solid #d8b75c;background:#0c1420;padding:12px 14px;margin:14px 0;color:#c5cfda}
+.warn{border-left-color:#d06d63}
+kbd{border:1px solid #4a5564;background:#121a26;border-radius:3px;padding:1px 5px;color:#fff}
+.flow{font-family:ui-monospace,Consolas,monospace;white-space:pre-wrap;background:#08101a;border:1px solid #202c3c;padding:14px;color:#c8d7e8;overflow:auto}
+.credit{display:grid;gap:8px}
+.credit>div{background:#09111b;border:1px solid #202b3a;padding:11px}
+.small{font-size:11px;color:#7e8a9b}
+@media(max-width:900px){.wrap{grid-template-columns:1fr;padding:18px}nav{position:relative;top:0}.hero h1{font-size:31px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+<h2>USER GUIDE · V1.0</h2>
+<a href="#overview">1. Overview</a>
+<a href="#start">2. Start the app</a>
+<a href="#screen">3. Screen layout</a>
+<a href="#left">4. Left hand / orchestra</a>
+<a href="#extensions">5. Chord extensions</a>
+<a href="#palm">6. Palm / back harmony</a>
+<a href="#right">7. Right hand / solo</a>
+<a href="#snap">8. Snap & glide</a>
+<a href="#scales">9. Keys & scales</a>
+<a href="#mix">10. Mixer & expression</a>
+<a href="#record">11. Record / preview / trim</a>
+<a href="#settings">12. Settings</a>
+<a href="#samples">13. Sample libraries</a>
+<a href="#performance">14. Performance tips</a>
+<a href="#troubleshooting">15. Troubleshooting</a>
+<a href="#architecture">16. Technical architecture</a>
+<a href="#privacy">17. Privacy</a>
+<a href="#credits">18. Credits</a>
+<a href="#history">19. Version history</a>
+</nav>
+
+<main>
+<section class="hero" id="overview">
+<div class="kicker">GESTURE-CONTROLLED CINEMATIC MUSIC IN THE BROWSER</div>
+<h1>Orchestra / Gesture</h1>
+<p>A two-hand performance instrument: conduct orchestral harmony with the left hand and play expressive solo voices with the right hand.</p>
+<span class="version">Documentation version 1.0 · August 2026</span>
+<p class="small">Creator: Uthpala Kaushalya · independent freelance / fun project. Interaction concept influenced by gesture.live; no affiliation.</p>
+</section>
+
+<h2 id="start">2. Start the app</h2>
+<ol>
+<li>Open the app in a current Chrome or Edge browser.</li>
+<li>Press <b>START CAMERA + AUDIO</b>.</li>
+<li>Allow camera access.</li>
+<li>Wait until the top status says the orchestra and solo samples are ready.</li>
+<li>Keep both hands comfortably inside the camera frame.</li>
+</ol>
+<div class="note">Browsers require a user gesture before Web Audio can start. That is why the Start button is required.</div>
+
+<h3>Local development</h3>
+<div class="flow">npm install
+npm run import:samples
+npm run install:solo-samples
+npm run dev</div>
+
+<h2 id="screen">3. Screen layout</h2>
+<p>The application uses a true 16:9 mirrored camera performance area, with most controls compressed into the bottom strip.</p>
+<table>
+<tr><th>Area</th><th>Purpose</th></tr>
+<tr><td>Left panel</td><td>Chord degree, hand-surface state, chord dynamics and roll/space.</td></tr>
+<tr><td>Center</td><td>Current chord name, notes and harmonic extension.</td></tr>
+<tr><td>Vertical harmony meter</td><td>Triad → 7th → 9th → 11th → 13th.</td></tr>
+<tr><td>Right pitch lane</td><td>14 wide scale-note lanes for solo pitch.</td></tr>
+<tr><td>Right panel</td><td>Solo instruments, snap/glide, solo dynamics and vibrato.</td></tr>
+<tr><td>Bottom strip</td><td>Key, scale, BPM, Snap/Glide and visual plate control.</td></tr>
+</table>
+
+<h2 id="left">4. Left hand — orchestra</h2>
+<p>The physical left hand controls harmony. Keep it visible while a chord should continue. A fist or removing the entire left hand from the camera releases the chord.</p>
+<table>
+<tr><th>Gesture</th><th>Scale degree</th></tr>
+<tr><td>Index finger</td><td>I</td></tr>
+<tr><td>Index + middle</td><td>II</td></tr>
+<tr><td>Index + middle + ring</td><td>III</td></tr>
+<tr><td>Four non-thumb fingers</td><td>IV</td></tr>
+<tr><td>All five fingers</td><td>V</td></tr>
+<tr><td>Index + pinky</td><td>VI</td></tr>
+<tr><td>Thumb + index + pinky</td><td>VII</td></tr>
+<tr><td>Fist</td><td>Release / silence</td></tr>
+</table>
+<div class="note">The app waits briefly for a hand shape to stabilize so a three-finger gesture does not accidentally trigger I and II while the fingers are being raised.</div>
+
+<h2 id="extensions">5. Hand height — chord extensions</h2>
+<p>The same chord-degree gesture becomes harmonically richer as the left hand rises.</p>
+<table>
+<tr><th>Approximate vertical zone</th><th>Harmony</th></tr>
+<tr><td>Lowest</td><td>Triad</td></tr>
+<tr><td>Low-mid</td><td>7th chord</td></tr>
+<tr><td>Middle</td><td>9th chord</td></tr>
+<tr><td>High-mid</td><td>11th chord</td></tr>
+<tr><td>Highest</td><td>13th chord</td></tr>
+</table>
+<p>The on-screen vertical meter shows the active zone. The hand does not need to touch the exact top or bottom edge of the camera.</p>
+
+<h2 id="palm">6. Palm / back — harmonic polarity</h2>
+<p>With the default automatic behavior:</p>
+<ul>
+<li><b>Palm facing camera:</b> selected scale/mode.</li>
+<li><b>Back of hand facing camera:</b> parallel opposite major/minor family.</li>
+</ul>
+<p>Examples: Major ↔ Minor. Dorian / Phrygian / melodic minor / harmonic minor are treated as minor-family modes; Lydian / Mixolydian are treated as major-family modes.</p>
+<p>If your camera identifies the surfaces backwards, open <b>Settings → Chords → Swap palm/back detector</b>.</p>
+
+<h2 id="right">7. Right hand — soloist</h2>
+<p>The right-hand center height sets pitch. Pinching the thumb to a finger activates that finger's assigned instrument.</p>
+<table>
+<tr><th>Pinch</th><th>Default voice</th></tr>
+<tr><td>Thumb + index</td><td>Violin</td></tr>
+<tr><td>Thumb + middle</td><td>Cello</td></tr>
+<tr><td>Thumb + ring</td><td>Piano</td></tr>
+<tr><td>Thumb + pinky</td><td>Flute</td></tr>
+</table>
+<p>Open <b>Settings → Melody</b> to assign instruments. Available choices include violin, viola, cello, piano, flute, clarinet, oboe, French horn, saxophone variants and synthetic voices.</p>
+
+<h2 id="snap">8. Snap vs Glide</h2>
+<h3>SNAP</h3>
+<p>The right hand moves through 14 wide scale-note lanes. Only scale notes are allocated lanes, so each note receives more physical vertical space. Hysteresis means a tiny hand wobble does not immediately change notes.</p>
+<p>Gold lanes indicate pitch classes in the active chord. The other highlighted lanes belong to the selected scale.</p>
+<h3>GLIDE / THEREMIN</h3>
+<p>Pitch is continuous instead of quantized. A pinch must remain active for sound to continue.</p>
+
+<h2 id="scales">9. Keys & scales</h2>
+<p>Keys: C, C#/Db, D, Eb, E, F, F#/Gb, G, Ab, A, Bb and B.</p>
+<p>Scales/modes: Major, Minor, Dorian, Mixolydian, Lydian, Phrygian, Melodic Minor and Harmonic Minor.</p>
+<p>The current scale determines both the harmony engine and the right-hand snapped pitch lanes.</p>
+
+<h2 id="mix">10. Mixer & expression</h2>
+<table>
+<tr><th>Control</th><th>Mapping</th></tr>
+<tr><td>Left hand horizontal position</td><td>Orchestra dynamics. Moving outward from the center increases volume.</td></tr>
+<tr><td>Left wrist roll</td><td>Hall / reverb space.</td></tr>
+<tr><td>Right hand horizontal position</td><td>Solo dynamics. Moving outward from the center increases volume.</td></tr>
+<tr><td>Right wrist roll</td><td>Vibrato depth.</td></tr>
+</table>
+<h3>Global mix trims</h3>
+<p>Settings → Sound contains independent Orchestra Mix and Solo Mix sliders. These are mixer trims; they do not remove the expressive hand-dynamics mapping.</p>
+<p>V1.0 defaults to a stronger orchestra and uses additional section makeup gain plus a master limiter.</p>
+
+<h2 id="record">11. Record, preview, trim and download</h2>
+<ol>
+<li>Press <b>RECORD</b>.</li>
+<li>A full-screen <b>3 → 2 → 1</b> countdown appears. The file is not recording during the countdown.</li>
+<li>Recording starts after 1 disappears. The mirrored camera, hand skeleton, HUD and generated audio are captured together.</li>
+<li>Press <b>STOP RECORDING</b>.</li>
+<li>The Recording Review editor opens automatically.</li>
+<li>Preview the video with normal video controls.</li>
+<li>Move the Start and End sliders or position the playhead and press <b>SET IN TO PLAYHEAD</b> / <b>SET OUT TO PLAYHEAD</b>.</li>
+<li>Press <b>PREVIEW SELECTION</b> to watch only the chosen range.</li>
+<li>Choose <b>DOWNLOAD FULL</b> or <b>EXPORT TRIMMED MP4</b>.</li>
+</ol>
+<div class="note">The trimmed MP4 is created locally in the browser. Accurate trimming re-encodes the selected range, so long recordings may take some time. A progress indicator is shown.</div>
+
+<h2 id="settings">12. Settings reference</h2>
+<h3>Chords</h3>
+<p>Key, scale, palm/back policy, palm/back inversion and seven-chord overview.</p>
+<h3>Melody</h3>
+<p>Assign a voice to each right-hand pinch channel and change Snap/Glide mode.</p>
+<h3>Sound</h3>
+<p>Orchestra/Solo global mix trims and expression mapping.</p>
+<h3>Camera</h3>
+<p>720p wide mode, 1080p mode, browser auto mode and hand-tracking rate (18 / 24 / 30 fps).</p>
+<h3>Recording</h3>
+<p>Start/stop recording and reopen the most recent recording review.</p>
+<h3>About</h3>
+<p>Creator information, credits, licenses and a link back to this guide.</p>
+
+<h2 id="samples">13. Sample libraries</h2>
+<h3>Orchestra</h3>
+<p>VSCO 2 Community Edition by Versilian Studios. The project uses imported orchestral WAV samples for ensemble sections. VSCO 2 CE is CC0/public-domain licensed.</p>
+<h3>Solo</h3>
+<p>The optional processed solo library comes from <code>nbrosowsky/tonejs-instruments</code>. The samples are CC BY 3.0 and are preferred for supported solo voices because the collection has been processed for browser instrument use.</p>
+<div class="warn note">When deploying processed solo samples, keep <code>public/solo-samples/ATTRIBUTION.txt</code>.</div>
+
+<h2 id="performance">14. Performance tips</h2>
+<ul>
+<li>Keep hands at a comfortable distance; do not push them close to the lens.</li>
+<li>Use horizontal motion—not camera distance—for dynamics.</li>
+<li>Keep fingers clearly separated for chord gestures.</li>
+<li>Move the right hand smoothly through the wide note lanes.</li>
+<li>If tracking is sluggish, choose 18 or 24 fps in Camera Settings.</li>
+<li>Use Settings → Sound to balance the global orchestra/solo relationship before performing.</li>
+</ul>
+
+<h2 id="troubleshooting">15. Troubleshooting</h2>
+<table>
+<tr><th>Problem</th><th>What to try</th></tr>
+<tr><td>No audio</td><td>Press Start again, check browser/site audio permission and Windows output device.</td></tr>
+<tr><td>Synth-like acoustic voice</td><td>Run <code>npm run import:samples</code> and <code>npm run install:solo-samples</code>.</td></tr>
+<tr><td>Palm/back reversed</td><td>Settings → Chords → Swap palm/back detector.</td></tr>
+<tr><td>Lag</td><td>Settings → Camera → 18 or 24 fps; close heavy background tabs.</td></tr>
+<tr><td>Chord remains after hand leaves</td><td>Make sure the entire left hand leaves the frame; release has a short tracking grace period.</td></tr>
+<tr><td>Trim export unavailable</td><td>Try a current Chrome/Edge build with browser video/audio encoders available.</td></tr>
+</table>
+
+<h2 id="architecture">16. Technical architecture</h2>
+<div class="flow">Webcam
+  ↓
+MediaPipe Hand Landmarker
+  ↓
+Gesture engine
+  ├─ Left: degree / extension / surface / dynamics / roll
+  └─ Right: pinch / pitch / dynamics / vibrato
+  ↓
+Music theory + orchestration engine
+  ↓
+Tone.js / Web Audio
+  ↓
+Canvas HUD + audio bus
+  ↓
+Mediabunny
+  ├─ live MP4 recording
+  └─ browser-local trim conversion</div>
+
+<h2 id="privacy">17. Privacy</h2>
+<p>Hand tracking and audio generation run in the browser. The webcam frame is used by the hand-tracking model to generate landmarks. Recording is created locally in the browser and is not uploaded by this application merely to create or trim the MP4.</p>
+
+<h2 id="credits">18. Credits</h2>
+<div class="credit">
+<div><b>Creator</b><br>Uthpala Kaushalya — independent freelance / fun project.</div>
+<div><b>Interaction inspiration</b><br><a href="https://www.gesture.live/">gesture.live</a>. Independent implementation; no affiliation.</div>
+<div><b>Development assistance</b><br>ChatGPT by OpenAI — software architecture, coding, debugging, iteration and documentation assistance.</div>
+<div><b>Hand tracking</b><br><a href="https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/web_js">Google MediaPipe Hand Landmarker</a>.</div>
+<div><b>Audio framework</b><br><a href="https://tonejs.github.io/">Tone.js</a> — MIT.</div>
+<div><b>Orchestral samples</b><br><a href="https://versilian-studios.com/vsco-community/">Versilian Studios — VSCO 2 Community Edition</a> — CC0.</div>
+<div><b>Processed solo samples</b><br><a href="https://github.com/nbrosowsky/tonejs-instruments">tonejs-instruments</a> — CC BY 3.0.</div>
+<div><b>MP4 writing/conversion</b><br><a href="https://mediabunny.dev/">Mediabunny</a> — MPL 2.0.</div>
+<div><b>UI/build</b><br><a href="https://react.dev/">React</a> and <a href="https://vite.dev/">Vite</a>.</div>
+</div>
+<p class="small">Third-party resources remain subject to their original license terms. © 2026 Uthpala Kaushalya for this independent application code/design unless otherwise noted.</p>
+
+<h2 id="history">19. Version history</h2>
+<table>
+<tr><th>Version</th><th>Main milestone</th></tr>
+<tr><td>0.1–0.3</td><td>Two-hand tracking, gesture chords, VSCO importer.</td></tr>
+<tr><td>0.4</td><td>Chord extensions, palm/back harmony, expanded solo lane.</td></tr>
+<tr><td>0.5–0.6</td><td>Clickable controls, wide snap lanes, lower-lag tracking, sample fixes.</td></tr>
+<tr><td>0.7</td><td>Processed solo samples, improved roll, saxophone options, solo presence mixing.</td></tr>
+<tr><td>0.8</td><td>Full-window layout and orchestra/solo mixer trims.</td></tr>
+<tr><td>0.9</td><td>Stronger orchestra, header fix, About/Credits, full documentation, 3-2-1 recording countdown, preview and browser-local MP4 trimming.</td></tr>
+<tr><td><b>1.0</b></td><td><b>First public release.</b></td></tr>
+</table>
+<p class="small">This guide is intended to be updated with each app release as controls and behavior evolve.</p>
+</main>
+</div>
+</body>
+</html>

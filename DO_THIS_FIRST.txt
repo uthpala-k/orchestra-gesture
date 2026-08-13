@@ -1,0 +1,21 @@
+ORCHESTRA / GESTURE V1.0
+
+RUN:
+npm install
+npm run import:samples
+npm run install:solo-samples
+npm run dev
+
+NEW:
+- substantially louder/more powerful orchestra
+- top-left duplicate text fixed
+- Settings -> About
+- USER GUIDE opens docs.html in a new tab
+- creator credit: Uthpala Kaushalya
+- gesture.live inspiration credit
+- ChatGPT/OpenAI development-assistance credit
+- Record now shows 3 / 2 / 1 countdown
+- Stop recording opens a preview/trim editor
+- set IN / OUT points
+- preview selected range
+- download full MP4 or export trimmed MP4

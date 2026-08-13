@@ -1,0 +1,28 @@
+{
+  "name": "orchestra-gesture-studio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "import:samples": "node tools/import-vsco256.mjs",
+    "install:solo-samples": "node tools/download-solo-samples.mjs",
+    "deploy:cloudflare": "npx wrangler pages deploy dist"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.22-rc.20250304",
+    "mediabunny": "^1.22.0",
+    "tone": "^15.1.22",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^4.6.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.1"
+  }
+}

@@ -191,6 +191,77 @@ export default function App(){
   const previewTimerRef=useRef<number|undefined>(undefined)
   const [status,setStatus]=useState('Press START to enable camera + audio')
   const [sampleMode,setSampleMode]=useState<'checking'|'real'|'fallback'>('checking')
+  const [publicStats,setPublicStats]=useState<{
+  visits:number
+  users:number
+}|null>(null)
+async function loadPublicStats(){
+  try{
+    const response=await fetch('/api/stats',{
+      cache:'no-store'
+    })
+
+    if(!response.ok)return
+
+    const data=await response.json()
+
+    if(
+      typeof data.visits==='number' &&
+      typeof data.users==='number'
+    ){
+      setPublicStats({
+        visits:data.visits,
+        users:data.users
+      })
+    }
+  }catch{
+    // Counter is optional. Never break the music app if statistics fail.
+  }
+}
+
+async function countPublicStat(type:'visit'|'use'){
+  const storageKey=
+    type==='visit'
+      ? 'orchestra-gesture-visitor-v1'
+      : 'orchestra-gesture-user-v1'
+
+  try{
+    if(localStorage.getItem(storageKey)==='1'){
+      await loadPublicStats()
+      return
+    }
+
+    const response=await fetch('/api/stats',{
+      method:'POST',
+      headers:{
+        'content-type':'application/json'
+      },
+      body:JSON.stringify({type})
+    })
+
+    if(!response.ok)return
+
+    const data=await response.json()
+
+    if(
+      typeof data.visits==='number' &&
+      typeof data.users==='number'
+    ){
+      setPublicStats({
+        visits:data.visits,
+        users:data.users
+      })
+
+      localStorage.setItem(storageKey,'1')
+    }
+  }catch{
+    // Statistics must never interfere with camera/audio.
+  }
+}
+
+useEffect(()=>{
+  void countPublicStat('visit')
+},[])
   const recordTimer=useRef<number|undefined>(undefined)
 
   const stateRef=useRef({
@@ -290,6 +361,9 @@ export default function App(){
 
       setStarted(true)
       setStatus('Ready — interactive controls are now clickable')
+
+      void countPublicStat('use')
+
       renderLoop()
     }catch(e:any){
       setSoloLoading(false)
@@ -943,6 +1017,22 @@ export default function App(){
         <button className="start" onClick={startApp}>START CAMERA + AUDIO</button>
         {cameraError&&<div className="error">{cameraError}</div>}
       </div>}
+      {publicStats&&
+        <div
+          className="public-stats"
+          title="Approximate unique browsers. Clearing browser data or using another device can count again."
+        >
+          <span>
+            VISITORS <b>{publicStats.visits.toLocaleString()}</b>
+          </span>
+
+          <i>·</i>
+
+          <span>
+            USED <b>{publicStats.users.toLocaleString()}</b>
+          </span>
+        </div>
+      }
     </main>
 
     <section className="control-deck">
@@ -1076,7 +1166,36 @@ export default function App(){
         <p>This is an independent freelance / fun project created by Uthpala Kaushalya: a browser-based gesture instrument for conducting orchestral harmony with the left hand and performing solo instruments with the right hand.</p>
         <p>The interaction concept is <strong>influenced by gesture.live</strong>. This application is an independent implementation and is not affiliated with, endorsed by, or part of gesture.live.</p>
         <p><strong>Development assistance:</strong> ChatGPT by OpenAI assisted with software architecture, coding, debugging, iteration and documentation.</p>
+        <h3>Connect with the creator</h3>
 
+        <div className="social-links">
+          <a
+            href="https://www.facebook.com/UthpalaKaushalya/"
+            target="_blank"
+            rel="noreferrer"
+          >
+          <b>Facebook</b>
+          <span>Uthpala Kaushalya</span>
+          </a>
+
+          <a
+            href="https://www.instagram.com/uthpala_kaushalya/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <b>Instagram</b>
+            <span>@uthpala_kaushalya</span>
+          </a>
+
+          <a
+            href="https://www.linkedin.com/in/uthpalakaushalya/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <b>LinkedIn</b>
+            <span>Uthpala Kaushalya</span>
+          </a>
+        </div>
         <h3>Technology & resource credits</h3>
         <div className="credit-list">
           <a href="https://www.gesture.live/" target="_blank" rel="noreferrer"><b>gesture.live</b><span>Interaction inspiration</span></a>

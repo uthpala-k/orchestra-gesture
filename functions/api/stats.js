@@ -26,19 +26,11 @@ function json(data, status = 200) {
 export async function onRequestGet(context) {
   try {
     const db = context.env.STATS_DB
-
-    if (!db) {
-      return json({ error: 'STATS_DB binding is missing' }, 500)
-    }
-
+    if (!db) return json({ error: 'STATS_DB binding is missing' }, 500)
     await ensureDatabase(db)
-
     const row = await db.prepare(`
-      SELECT visits, users
-      FROM app_stats
-      WHERE id = 1
+      SELECT visits, users FROM app_stats WHERE id = 1
     `).first()
-
     return json({
       visits: Number(row?.visits ?? 0),
       users: Number(row?.users ?? 0)
@@ -52,22 +44,16 @@ export async function onRequestGet(context) {
 export async function onRequestPost(context) {
   try {
     const db = context.env.STATS_DB
-
-    if (!db) {
-      return json({ error: 'STATS_DB binding is missing' }, 500)
-    }
-
+    if (!db) return json({ error: 'STATS_DB binding is missing' }, 500)
     await ensureDatabase(db)
 
     const body = await context.request.json()
     const type = body?.type
-
     if (type !== 'visit' && type !== 'use') {
       return json({ error: 'Invalid counter type' }, 400)
     }
 
     const column = type === 'visit' ? 'visits' : 'users'
-
     const row = await db.prepare(`
       UPDATE app_stats
       SET ${column} = ${column} + 1

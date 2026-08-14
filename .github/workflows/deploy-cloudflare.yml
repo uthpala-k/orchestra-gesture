@@ -37,19 +37,18 @@ jobs:
         run: |
           curl -L "https://s3.amazonaws.com/VersilianStudios/256OrchestralSamples.rar" \
             -o /tmp/vsco.rar
-
           mkdir -p /tmp/vsco
+          unar -quiet -output-directory /tmp/vsco /tmp/vsco.rar
 
-          unar -quiet \
-            -output-directory /tmp/vsco \
-            /tmp/vsco.rar
-
-      - name: Import orchestra samples
+      - name: Import orchestra + real pulse articulations
         run: |
           node tools/import-vsco256.mjs "/tmp/vsco"
 
-      - name: Install solo samples
+      - name: Install processed solo samples
         run: npm run install:solo-samples
+
+      - name: Install real folk samples
+        run: npm run install:folk-samples
 
       - name: Build website
         run: npm run build

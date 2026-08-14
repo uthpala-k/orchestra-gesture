@@ -1,214 +1,134 @@
-# Orchestra / Gesture
+# Orchestra Gesture Studio V1.1
 
-**Version 1.0**
+V1.1 adds four major product-level improvements:
 
-A browser-based two-hand gesture instrument for conducting orchestral harmony
-with the left hand and performing solo instruments with the right hand.
+## 1. Stronger orchestra
 
-**Creator:** Uthpala Kaushalya  
-**Project type:** Independent freelance / fun project  
-**Live site:** https://orchestra-gesture.pages.dev
+The orchestra now has:
+- higher orchestral bus headroom
+- individual makeup gain on violin / viola / cello / horn sections
+- a louder continuous chord bed
+- stronger finite-sample re-layering
+- a larger Orchestra Mix trim range
+- only very gentle orchestra ducking when a solo is active
+- master limiting to control clipping
 
-The interaction concept is influenced by [gesture.live](https://www.gesture.live/).
-This project is an independent implementation and is not affiliated with,
-endorsed by, or part of gesture.live.
+Default global trims:
+- Orchestra 92%
+- Solo 52%
 
-Development assistance was provided by ChatGPT by OpenAI.
+You can still change both in:
+Settings -> Sound
 
-## Features
+## 2. Header overlap fixed
 
-- Real-time two-hand tracking with MediaPipe Hand Landmarker
-- Left-hand scale-degree chord gestures
-- Hand-height chord extensions: triad, 7th, 9th, 11th, 13th
-- Palm/back harmonic polarity switching
-- Horizontal hand movement for dynamics
-- Wrist roll for hall space and solo vibrato
-- Right-hand four-finger pinch solo system
-- 14-note wide SNAP lane and continuous GLIDE mode
-- Multiple keys and scales/modes
-- Orchestral and solo sample playback
-- Adjustable orchestra/solo mixer
-- In-browser MP4 recording
-- 3-2-1 recording countdown
-- Recording preview, trim and MP4 export
-- Full user guide in `public/docs.html`
+The performance canvas no longer draws a second "ORCHESTRA / GESTURE" title
+behind the HTML top-left title.
 
-## Tech stack
+## 3. About + full documentation
 
-- React
-- TypeScript
-- Vite
-- Google MediaPipe Hand Landmarker
-- Tone.js / Web Audio
-- Mediabunny
+Settings -> About contains:
+- Creator: Uthpala Kaushalya
+- independent freelance / fun project description
+- gesture.live inspiration statement
+- ChatGPT / OpenAI development-assistance credit
+- MediaPipe, Tone.js, VSCO 2 CE, tonejs-instruments, Mediabunny, React and Vite credits
+- license notes
+- link to the full user guide
 
-## Quick start
+The full versioned guide is:
 
-Requirements:
+public/docs.html
 
-- Node.js LTS
-- npm
-- A modern Chromium-based browser such as Chrome or Edge
-- Webcam
-- Optional local orchestral sample pack described below
+The app opens it in a separate browser tab.
 
-Install dependencies:
+## 4. Recording editor
+
+Record workflow:
+
+RECORD
+-> countdown 3
+-> 2
+-> 1
+-> recording begins
+-> STOP RECORDING
+-> preview editor opens
+-> select IN / OUT
+-> preview selection
+-> DOWNLOAD FULL or EXPORT TRIMMED MP4
+
+Trim conversion happens locally in the browser using Mediabunny's Conversion API.
+
+## Run
 
 ```powershell
 npm install
-```
-
-### Orchestra samples
-
-The project does **not** commit large audio sample folders to Git.
-
-For the VSCO 2 Community Edition 256-sample pack, place the downloaded sample
-folder in your normal Downloads directory, then run:
-
-```powershell
 npm run import:samples
-```
-
-You can also provide the source folder explicitly:
-
-```powershell
-node tools/import-vsco256.mjs "C:\path\to\256OrchestralSamples"
-```
-
-### Processed solo samples
-
-Run:
-
-```powershell
 npm run install:solo-samples
-```
-
-This downloads the selected browser-oriented sample subset used by the solo
-engine and writes the required attribution file locally.
-
-### Run locally
-
-```powershell
 npm run dev
 ```
 
-Then open the localhost URL printed by Vite.
+If you already have populated `public/samples` and `public/solo-samples` folders
+from V0.8, you may copy those into V1.1 instead of re-downloading samples.
 
-### Production build
-
-```powershell
-npm run build
-```
-
-The production site is generated in:
-
-```text
-dist/
-```
-
-## Gesture overview
-
-### Left hand — orchestra
-
-| Gesture | Scale degree |
-|---|---|
-| Index | I |
-| Index + middle | II |
-| Index + middle + ring | III |
-| Four non-thumb fingers | IV |
-| All five fingers | V |
-| Index + pinky | VI |
-| Thumb + index + pinky | VII |
-| Fist | Release |
-
-Left-hand height increases harmonic richness:
-
-```text
-Triad -> 7th -> 9th -> 11th -> 13th
-```
-
-### Right hand — solo
-
-Thumb pinches select four independently assignable voices:
-
-- Thumb + index
-- Thumb + middle
-- Thumb + ring
-- Thumb + pinky
-
-Vertical position controls pitch. Horizontal position controls solo dynamics.
-Wrist roll controls vibrato.
-
-See the full guide at `public/docs.html`.
-
-## Repository policy for audio
-
-Large/generated audio files are deliberately excluded from Git.
-
-Do not commit:
-
-```text
-public/samples/*
-public/solo-samples/*
-dist/
-node_modules/
-```
-
-The setup scripts recreate the required sample folders locally.
-
-This keeps clones small and separates the project code from third-party audio
-licensing requirements.
-
-## Open-source license
-
-The original Orchestra / Gesture source code in this repository is released
-under the **MIT License**. See [LICENSE](LICENSE).
-
-That means people may use, copy, modify, distribute and build on the project,
-including commercially, as long as the MIT copyright and permission notice are
-preserved.
-
-Third-party libraries and audio resources are **not relicensed** under this
-repository's MIT License. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-
-## Contributing
-
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-Typical workflow:
-
-```powershell
-git checkout -b feature/my-change
-npm install
-npm run dev
-npm run build
-git add .
-git commit -m "Describe the change"
-git push
-```
-
-Then open a pull request on GitHub.
-
-## Credits
-
-- **Uthpala Kaushalya** — creator
-- **gesture.live** — interaction inspiration; no affiliation
-- **ChatGPT by OpenAI** — development, debugging and documentation assistance
-- **Google MediaPipe** — hand tracking
-- **Tone.js** — Web Audio framework
-- **Mediabunny** — browser media recording/conversion
-- **Versilian Studios / VSCO 2 Community Edition** — optional orchestral samples
-- **nbrosowsky/tonejs-instruments** — optional processed solo samples
-- **React / Vite** — application framework and build tooling
 
 ## Public deployment
 
-The current public build uses Cloudflare Pages.
+See `DEPLOY_FREE.md` for the zero-cost Cloudflare Pages deployment procedure.
 
-See:
 
-```text
-DEPLOY_FREE.md
+## V1.1 — Pastoral voices and Orchestral Pulse
+
+V1.1 adds REAL sampled pastoral/folk voices:
+
+- Whistle
+- Pan flute
+- Recorder
+- Ocarina
+- Celtic / folk harp
+- Hammered dulcimer
+- Musette / folk accordion
+
+These voices are downloaded from the FluidR3_GM browser sample distribution
+in gleitz/midi-js-soundfonts and are licensed CC BY 3.0. Run:
+
+```powershell
+npm run install:folk-samples
 ```
 
-for the deployment workflow.
+Settings -> Melody includes a reverb slider for every selected voice.
+
+The BPM control now drives **Orchestral Pulse**, a real-sample accompaniment engine. The patterns are original, but the sound comes from imported VSCO short articulations rather than oscillator beeps. Supported meters are:
+
+- 4/4
+- 2/4
+- 3/4 waltz
+- 6/8
+- 5/8 (2+3)
+- 7/8 (2+2+3)
+- 9/8 (3+3+3)
+
+The generated rhythmic patterns follow the current left-hand chord and stop
+when the chord hand disappears or makes a fist.
+
+No Lord of the Rings soundtrack audio, melody, MIDI, or transcription is
+included in the repository. The pastoral palette is only a high-level
+inspiration reference.
+
+
+## V1.1 refinement — sustained samples, per-voice volume and final mix
+
+The final V1.1 behavior also includes:
+
+- sampled Whistle, Pan Flute, Recorder, Ocarina and Musette sustain for as long
+  as a SNAP pinch is held by periodically refreshing the finite real recording;
+- naturally plucked/struck voices such as Harp and Dulcimer still decay;
+- a per-voice **Volume** control (0–150%) beside per-voice Reverb in
+  Settings -> Melody;
+- Settings -> Sound defaults to **Orchestra 15%** and **Solo 70%**;
+- Orchestra/Solo mix controls are literal final bus output faders;
+- the strengthened real-sample Orchestral Pulse arrangement remains in V1.1.
+
+The folk sample bank is FluidR3_GM via `gleitz/midi-js-soundfonts`
+(CC BY 3.0). Keep the generated `public/folk-samples/ATTRIBUTION.txt`
+with deployed builds.

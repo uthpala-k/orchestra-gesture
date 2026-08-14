@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FilesetResolver, HandLandmarker, DrawingUtils } from '@mediapipe/tasks-vision'
-import { OrchestraEngine, type SoloName } from './music/OrchestraEngine'
+import { OrchestraEngine, METER_SPECS, type SoloName, type MeterName } from './music/OrchestraEngine'
 import {
   KEY_OPTIONS, ROMAN, EXTENSION_LABELS,
   buildDegreeChord, buildGestureChordMatrix,
@@ -18,7 +18,7 @@ import { Mp4Recorder, downloadBlob, trimMp4 } from './recording/mp4Recorder'
 const FINGERS=[8,12,16,20] as const
 const FINGER_LABELS=['I','M','R','P'] as const
 const SOLO_OPTIONS:{value:SoloName,label:string}[]=[
-  {value:'violin',label:'Violin'},
+  {value:'violin',label:'Violin / fiddle'},
   {value:'viola',label:'Viola'},
   {value:'cello',label:'Cello'},
   {value:'piano',label:'Piano'},
@@ -30,6 +30,13 @@ const SOLO_OPTIONS:{value:SoloName,label:string}[]=[
   {value:'sopranoSax',label:'Soprano sax*'},
   {value:'altoSax',label:'Alto sax*'},
   {value:'tenorSax',label:'Tenor sax*'},
+  {value:'whistle',label:'Whistle · REAL SAMPLE'},
+  {value:'panFlute',label:'Pan flute · REAL SAMPLE'},
+  {value:'recorder',label:'Recorder · REAL SAMPLE'},
+  {value:'ocarina',label:'Ocarina · REAL SAMPLE'},
+  {value:'celticHarp',label:'Celtic / folk harp · REAL SAMPLE'},
+  {value:'hammeredDulcimer',label:'Hammered dulcimer · REAL SAMPLE'},
+  {value:'musette',label:'Musette / folk accordion · REAL SAMPLE'},
   {value:'theremin',label:'Theremin'},
   {value:'saw',label:'Saw'},
   {value:'square',label:'Square'},
@@ -49,7 +56,8 @@ const SCALE_OPTIONS:{value:ScaleName,label:string}[]=[
   {value:'harmonicMinor',label:'Harmonic minor'},
 ]
 
-type Tab='chords'|'melody'|'sound'|'camera'|'recording'|'about'
+type Tab='chords'|'melody'|'rhythm'|'sound'|'camera'|'recording'|'about'
+type PerformanceMode='sustain'|'pulse'
 type SoloMode='snap'|'glide'
 type CameraPreset='wide'|'hd'|'auto'
 type PalmBackPolicy='automatic'|'same'
@@ -166,12 +174,16 @@ export default function App(){
   const [soloRawMidi,setSoloRawMidi]=useState(60)
   const [soloLanePosition,setSoloLanePosition]=useState(0)
   const [soloLoading,setSoloLoading]=useState(false)
-  const [orchestraMix,setOrchestraMix]=useState(92)
-  const [soloMix,setSoloMix]=useState(52)
+  const [orchestraMix,setOrchestraMix]=useState(15)
+  const [soloMix,setSoloMix]=useState(70)
 
   const [rootPc,setRootPc]=useState(0)
   const [scale,setScale]=useState<ScaleName>('major')
   const [bpm,setBpm]=useState(92)
+  const [performanceMode,setPerformanceMode]=useState<PerformanceMode>('sustain')
+  const [meter,setMeter]=useState<MeterName>('4/4')
+  const [voiceReverbs,setVoiceReverbs]=useState<Record<string,number>>({})
+  const [voiceVolumes,setVoiceVolumes]=useState<Record<string,number>>({})
   const [tab,setTab]=useState<Tab>('chords')
   const [settingsOpen,setSettingsOpen]=useState(false)
   const [lightPlate,setLightPlate]=useState(false)
@@ -191,81 +203,11 @@ export default function App(){
   const previewTimerRef=useRef<number|undefined>(undefined)
   const [status,setStatus]=useState('Press START to enable camera + audio')
   const [sampleMode,setSampleMode]=useState<'checking'|'real'|'fallback'>('checking')
-  const [publicStats,setPublicStats]=useState<{
-  visits:number
-  users:number
-}|null>(null)
-async function loadPublicStats(){
-  try{
-    const response=await fetch('/api/stats',{
-      cache:'no-store'
-    })
-
-    if(!response.ok)return
-
-    const data=await response.json()
-
-    if(
-      typeof data.visits==='number' &&
-      typeof data.users==='number'
-    ){
-      setPublicStats({
-        visits:data.visits,
-        users:data.users
-      })
-    }
-  }catch{
-    // Counter is optional. Never break the music app if statistics fail.
-  }
-}
-
-async function countPublicStat(type:'visit'|'use'){
-  const storageKey=
-    type==='visit'
-      ? 'orchestra-gesture-visitor-v1'
-      : 'orchestra-gesture-user-v1'
-
-  try{
-    if(localStorage.getItem(storageKey)==='1'){
-      await loadPublicStats()
-      return
-    }
-
-    const response=await fetch('/api/stats',{
-      method:'POST',
-      headers:{
-        'content-type':'application/json'
-      },
-      body:JSON.stringify({type})
-    })
-
-    if(!response.ok)return
-
-    const data=await response.json()
-
-    if(
-      typeof data.visits==='number' &&
-      typeof data.users==='number'
-    ){
-      setPublicStats({
-        visits:data.visits,
-        users:data.users
-      })
-
-      localStorage.setItem(storageKey,'1')
-    }
-  }catch{
-    // Statistics must never interfere with camera/audio.
-  }
-}
-
-useEffect(()=>{
-  void countPublicStat('visit')
-},[])
+  const [publicStats,setPublicStats]=useState<{visits:number;users:number}|null>(null)
   const recordTimer=useRef<number|undefined>(undefined)
 
   const stateRef=useRef({
-    recording,recordSeconds,rootPc,scale,bpm,lightPlate,sampleMode,gestureDegree,
+    recording,recordSeconds,rootPc,scale,bpm,performanceMode,meter,lightPlate,sampleMode,gestureDegree,
     currentChord,chordHeight,extensionLevel,chordDynamics,leftRoll,
     harmonySide,surfaceLabel,invertPalmBack,palmBackPolicy,
     fingerVoices,soloMode,soloDynamics,soloVibrato,rightRoll,soloMidis,soloRawMidi,soloLanePosition,trackingFps
@@ -273,13 +215,13 @@ useEffect(()=>{
 
   useEffect(()=>{
     stateRef.current={
-      recording,recordSeconds,rootPc,scale,bpm,lightPlate,sampleMode,gestureDegree,
+      recording,recordSeconds,rootPc,scale,bpm,performanceMode,meter,lightPlate,sampleMode,gestureDegree,
       currentChord,chordHeight,extensionLevel,chordDynamics,leftRoll,
       harmonySide,surfaceLabel,invertPalmBack,palmBackPolicy,
       fingerVoices,soloMode,soloDynamics,soloVibrato,rightRoll,soloMidis,soloRawMidi,soloLanePosition,trackingFps
     }
   },[
-    recording,recordSeconds,rootPc,scale,bpm,lightPlate,sampleMode,gestureDegree,
+    recording,recordSeconds,rootPc,scale,bpm,performanceMode,meter,lightPlate,sampleMode,gestureDegree,
     currentChord,chordHeight,extensionLevel,chordDynamics,leftRoll,
     harmonySide,surfaceLabel,invertPalmBack,palmBackPolicy,
     fingerVoices,soloMode,soloDynamics,soloVibrato,rightRoll,soloMidis,soloRawMidi,soloLanePosition,trackingFps
@@ -288,6 +230,14 @@ useEffect(()=>{
   useEffect(()=>{
     engine.setMixLevels(orchestraMix,soloMix)
   },[engine,orchestraMix,soloMix])
+
+  useEffect(()=>{
+    engine.setTempo(bpm)
+  },[engine,bpm])
+
+  useEffect(()=>{
+    engine.setPulseMeter(meter)
+  },[engine,meter])
 
   useEffect(()=>()=>{
     cancelAnimationFrame(rafRef.current)
@@ -329,6 +279,44 @@ useEffect(()=>{
     setCameraInfo(`${st.width||video.videoWidth}×${st.height||video.videoHeight}${st.zoom!==undefined?` · zoom ${st.zoom}`:''}`)
   }
 
+  async function loadPublicStats(){
+    try{
+      const response=await fetch('/api/stats',{cache:'no-store'})
+      if(!response.ok)return
+      const data=await response.json()
+      if(typeof data.visits==='number'&&typeof data.users==='number'){
+        setPublicStats({visits:data.visits,users:data.users})
+      }
+    }catch{}
+  }
+
+  async function countPublicStat(type:'visit'|'use'){
+    const storageKey=type==='visit'
+      ?'orchestra-gesture-visitor-v1'
+      :'orchestra-gesture-user-v1'
+    try{
+      if(localStorage.getItem(storageKey)==='1'){
+        await loadPublicStats()
+        return
+      }
+      const response=await fetch('/api/stats',{
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({type})
+      })
+      if(!response.ok)return
+      const data=await response.json()
+      if(typeof data.visits==='number'&&typeof data.users==='number'){
+        setPublicStats({visits:data.visits,users:data.users})
+        localStorage.setItem(storageKey,'1')
+      }
+    }catch{}
+  }
+
+  useEffect(()=>{
+    void countPublicStat('visit')
+  },[])
+
   async function startApp(){
     try{
       setCameraError('')
@@ -361,9 +349,7 @@ useEffect(()=>{
 
       setStarted(true)
       setStatus('Ready — interactive controls are now clickable')
-
       void countPublicStat('use')
-
       renderLoop()
     }catch(e:any){
       setSoloLoading(false)
@@ -392,8 +378,35 @@ useEffect(()=>{
     try{
       setSoloLoading(true)
       await engine.prepareSoloVoice(name)
+      const wet=voiceReverbs[name]??engine.getVoiceReverb(name)
+      engine.setVoiceReverb(name,wet)
+
+      const level=voiceVolumes[name]??engine.getVoiceVolume(name)
+      engine.setVoiceVolume(name,level)
     }finally{
       setSoloLoading(false)
+    }
+  }
+
+  function changeVoiceReverb(name:SoloName,value:number){
+    const wet=clamp01(value)
+    setVoiceReverbs(prev=>({...prev,[name]:wet}))
+    engine.setVoiceReverb(name,wet)
+  }
+
+  function changeVoiceVolume(name:SoloName,value:number){
+    const level=Math.max(0,Math.min(1.5,value))
+    setVoiceVolumes(prev=>({...prev,[name]:level}))
+    engine.setVoiceVolume(name,level)
+  }
+
+  function switchPerformanceMode(){
+    const next:PerformanceMode=performanceMode==='sustain'?'pulse':'sustain'
+    setPerformanceMode(next)
+    stateRef.current.performanceMode=next
+    if(currentChord&&leftVisibleRef.current){
+      if(next==='pulse')engine.playPulseChord(currentChord.midi,.82)
+      else engine.playChordMidi(currentChord.midi,.82)
     }
   }
 
@@ -527,7 +540,8 @@ useEffect(()=>{
       if(now-chordCandidate.current.since>165){
         if(degree>=1&&degree<=7&&activeChordSignature.current!==signature){
           const chord=buildDegreeChord(s.rootPc,effectiveScale,degree,ext)
-          engine.playChordMidi(chord.midi,.82)
+          if(s.performanceMode==='pulse')engine.playPulseChord(chord.midi,.82)
+          else engine.playChordMidi(chord.midi,.82)
           stateRef.current.currentChord=chord
           setCurrentChord(chord)
           activeChordSignature.current=signature
@@ -612,7 +626,7 @@ useEffect(()=>{
         const strength=pinchStrength(lm,FINGERS[fi])
         const was=pinchActiveRef.current[fi]
 
-        // Easier, faster pinch engagement than V1.0, with strong hysteresis
+        // Easier, faster pinch engagement than V1.1, with strong hysteresis
         // to prevent fluttering and stuck/retriggered notes.
         const active=was?strength>.33:strength>.58
         pinchActiveRef.current[fi]=active
@@ -986,7 +1000,7 @@ useEffect(()=>{
   return <div className={`app ${lightPlate?'light-plate':''}`}>
     <div className="topbar">
       <div>
-        <div className="brand">ORCHESTRA / GESTURE <span className="version">V1.0</span></div>
+        <div className="brand">ORCHESTRA / GESTURE <span className="version">V1.1</span></div>
         <div className="status">{sampleMode==='real'?'ORCHESTRA WAV':'SYNTH FALLBACK'} · SOLO {soloLoading?'LOADING':'READY'} {cameraInfo&&`· ${cameraInfo}`}</div>
       </div>
       <div className="top-actions">
@@ -1017,22 +1031,15 @@ useEffect(()=>{
         <button className="start" onClick={startApp}>START CAMERA + AUDIO</button>
         {cameraError&&<div className="error">{cameraError}</div>}
       </div>}
-      {publicStats&&
-        <div
-          className="public-stats"
-          title="Approximate unique browsers. Clearing browser data or using another device can count again."
-        >
-          <span>
-            VISITORS <b>{publicStats.visits.toLocaleString()}</b>
-          </span>
 
-          <i>·</i>
-
-          <span>
-            USED <b>{publicStats.users.toLocaleString()}</b>
-          </span>
-        </div>
-      }
+      {publicStats&&<div
+        className="public-stats"
+        title="Approximate unique browsers. Clearing browser data or using another device can count again."
+      >
+        <span>VISITORS <b>{publicStats.visits.toLocaleString()}</b></span>
+        <i>·</i>
+        <span>USED <b>{publicStats.users.toLocaleString()}</b></span>
+      </div>}
     </main>
 
     <section className="control-deck">
@@ -1047,6 +1054,14 @@ useEffect(()=>{
         </select>
       </label>
       <label>BPM<input type="number" min="40" max="220" value={bpm} onChange={e=>setBpm(+e.target.value)}/></label>
+      <label>Meter
+        <select value={meter} onChange={e=>setMeter(e.target.value as MeterName)} disabled={performanceMode==='sustain'}>
+          {(Object.keys(METER_SPECS) as MeterName[]).map(m=><option value={m} key={m}>{METER_SPECS[m].label}</option>)}
+        </select>
+      </label>
+      <button className={`pulse-switch ${performanceMode}`} onClick={switchPerformanceMode}>
+        {performanceMode==='pulse'?'⚡ ORCHESTRAL PULSE ON':'○ SUSTAIN MODE'}
+      </button>
       <button className={`mode-switch ${soloMode}`} onClick={()=>{
         engine.stopAllSolo();pinchActiveRef.current=[false,false,false,false];snapLaneIndexRef.current=null
         setSoloMode(m=>m==='snap'?'glide':'snap')
@@ -1062,7 +1077,7 @@ useEffect(()=>{
 
     {settingsOpen&&<aside className="settings">
       <div className="tabs">
-        {(['chords','melody','sound','camera','recording','about'] as Tab[]).map(t=><button className={tab===t?'selected':''} key={t} onClick={()=>setTab(t)}>{t}</button>)}
+        {(['chords','melody','rhythm','sound','camera','recording','about'] as Tab[]).map(t=><button className={tab===t?'selected':''} key={t} onClick={()=>setTab(t)}>{t}</button>)}
       </div>
 
       {tab==='chords'&&<div className="panel">
@@ -1098,14 +1113,50 @@ useEffect(()=>{
         {['Index','Middle','Ring','Pinky'].map((label,i)=><div className="row" key={label}>
           <span>{label}</span>
           <select value={fingerVoices[i]} onChange={e=>void changeVoice(i,e.target.value as SoloName)}>
-            {SOLO_OPTIONS.map(v=><option key={v.value} value={v.value}>{v.label}{engine.isPremiumVoice(v.value)?' · PROCESSED':engine.isVoiceSampled(v.value)?' · WAV':''}</option>)}
+            {SOLO_OPTIONS.map(v=><option key={v.value} value={v.value}>{v.label}{engine.isPremiumVoice(v.value)?' · PROCESSED':engine.isFolkSampled(v.value)?' · SAMPLED':engine.isVoiceSampled(v.value)?' · WAV':''}</option>)}
           </select>
+          <label className="voice-volume">Volume <b>{Math.round((voiceVolumes[fingerVoices[i]]??engine.getVoiceVolume(fingerVoices[i]))*100)}%</b>
+            <input type="range" min="0" max="150"
+              value={Math.round((voiceVolumes[fingerVoices[i]]??engine.getVoiceVolume(fingerVoices[i]))*100)}
+              onChange={e=>changeVoiceVolume(fingerVoices[i],+e.target.value/100)}/>
+          </label>
+          <label className="voice-reverb">Reverb <b>{Math.round((voiceReverbs[fingerVoices[i]]??engine.getVoiceReverb(fingerVoices[i]))*100)}%</b>
+            <input type="range" min="0" max="100"
+              value={Math.round((voiceReverbs[fingerVoices[i]]??engine.getVoiceReverb(fingerVoices[i]))*100)}
+              onChange={e=>changeVoiceReverb(fingerVoices[i],+e.target.value/100)}/>
+          </label>
           <span>{soloMidis[i]===null?'—':soloMode==='snap'?midiToNote(soloMidis[i]!):soloMidis[i]!.toFixed(1)}</span>
         </div>)}
         <button className="wide-button" onClick={()=>{
           engine.stopAllSolo();pinchActiveRef.current=[false,false,false,false];snapLaneIndexRef.current=null
           setSoloMode(m=>m==='snap'?'glide':'snap')
         }}>{soloMode==='snap'?'Switch to continuous glide':'Switch to snapped notes'}</button>
+      </div>}
+
+      {tab==='rhythm'&&<div className="panel">
+        <h2>Orchestral Pulse</h2>
+        <p><strong>Sustain</strong> keeps the current long-held chord behavior. <strong>Orchestral Pulse</strong> turns the current hand chord into a tempo-synchronised accompaniment played with REAL sampled orchestral articulations.</p>
+        <div className="settings-grid">
+          <label>Performance mode
+            <select value={performanceMode} onChange={e=>{
+              const next=e.target.value as PerformanceMode
+              if(next!==performanceMode)switchPerformanceMode()
+            }}>
+              <option value="sustain">Sustain</option>
+              <option value="pulse">Orchestral Pulse</option>
+            </select>
+          </label>
+          <label>Time signature
+            <select value={meter} onChange={e=>setMeter(e.target.value as MeterName)}>
+              {(Object.keys(METER_SPECS) as MeterName[]).map(m=><option value={m} key={m}>{METER_SPECS[m].label}</option>)}
+            </select>
+          </label>
+          <label>BPM
+            <input type="number" min="40" max="220" value={bpm} onChange={e=>setBpm(+e.target.value)}/>
+          </label>
+        </div>
+        <p>The pulse follows the chord currently selected by the left hand and stops immediately on a fist or when the left hand leaves the camera. Odd meters use explicit groupings such as 5/8 = 2+3 and 7/8 = 2+2+3.</p>
+        <p>No copyrighted soundtrack audio is included. The accompaniment uses real VSCO sample articulations and original chord-following orchestration patterns.</p>
       </div>}
 
       {tab==='sound'&&<div className="panel">
@@ -1120,7 +1171,7 @@ useEffect(()=>{
               onChange={e=>setSoloMix(+e.target.value)}/>
           </label>
         </div>
-        <p>V1.0 gives the orchestra substantially more output headroom and section makeup gain. Solo ducking is now extremely gentle so the chord bed stays powerful under a lead instrument.</p>
+        <p>Orchestra mix and Solo mix are final output faders. V1.1 starts at Orchestra 15% and Solo 70%; move either slider down or up to change that bus's final master level without changing the hand-expression mapping.</p>
         <p>Left horizontal position = chord volume; left roll = hall space. Right horizontal position = solo volume; right roll = vibrato.</p>
         <p>Solo WAV instruments are preloaded before performance, so a pinch does not wait for a new sample download.</p>
         <p>The processed solo library is CC BY 3.0. Keep public/solo-samples/ATTRIBUTION.txt with any deployed build that includes those samples.</p>
@@ -1128,7 +1179,7 @@ useEffect(()=>{
 
       {tab==='camera'&&<div className="panel">
         <h2>Camera / field of view</h2>
-        <p>V1.0 no longer crops a 16:9 webcam into 20:9. It shows the entire camera frame. “Wide” requests 1280×720 because some webcams expose a wider sensor crop at 720p than at 1080p.</p>
+        <p>V1.1 no longer crops a 16:9 webcam into 20:9. It shows the entire camera frame. “Wide” requests 1280×720 because some webcams expose a wider sensor crop at 720p than at 1080p.</p>
         <label>Camera mode
           <select value={cameraPreset} onChange={e=>void changeCameraPreset(e.target.value as CameraPreset)}>
             <option value="wide">Wide 1280×720</option>
@@ -1166,36 +1217,14 @@ useEffect(()=>{
         <p>This is an independent freelance / fun project created by Uthpala Kaushalya: a browser-based gesture instrument for conducting orchestral harmony with the left hand and performing solo instruments with the right hand.</p>
         <p>The interaction concept is <strong>influenced by gesture.live</strong>. This application is an independent implementation and is not affiliated with, endorsed by, or part of gesture.live.</p>
         <p><strong>Development assistance:</strong> ChatGPT by OpenAI assisted with software architecture, coding, debugging, iteration and documentation.</p>
+
         <h3>Connect with the creator</h3>
-
         <div className="social-links">
-          <a
-            href="https://www.facebook.com/UthpalaKaushalya/"
-            target="_blank"
-            rel="noreferrer"
-          >
-          <b>Facebook</b>
-          <span>Uthpala Kaushalya</span>
-          </a>
-
-          <a
-            href="https://www.instagram.com/uthpala_kaushalya/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <b>Instagram</b>
-            <span>@uthpala_kaushalya</span>
-          </a>
-
-          <a
-            href="https://www.linkedin.com/in/uthpalakaushalya/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <b>LinkedIn</b>
-            <span>Uthpala Kaushalya</span>
-          </a>
+          <a href="https://www.facebook.com/UthpalaKaushalya/" target="_blank" rel="noreferrer"><b>Facebook</b><span>Uthpala Kaushalya</span></a>
+          <a href="https://www.instagram.com/uthpala_kaushalya/" target="_blank" rel="noreferrer"><b>Instagram</b><span>@uthpala_kaushalya</span></a>
+          <a href="https://www.linkedin.com/in/uthpalakaushalya/" target="_blank" rel="noreferrer"><b>LinkedIn</b><span>Uthpala Kaushalya</span></a>
         </div>
+
         <h3>Technology & resource credits</h3>
         <div className="credit-list">
           <a href="https://www.gesture.live/" target="_blank" rel="noreferrer"><b>gesture.live</b><span>Interaction inspiration</span></a>
@@ -1203,6 +1232,7 @@ useEffect(()=>{
           <a href="https://tonejs.github.io/" target="_blank" rel="noreferrer"><b>Tone.js</b><span>Web Audio instrument/effects engine · MIT</span></a>
           <a href="https://versilian-studios.com/vsco-community/" target="_blank" rel="noreferrer"><b>Versilian Studios · VSCO 2 CE</b><span>Orchestral samples · CC0</span></a>
           <a href="https://github.com/nbrosowsky/tonejs-instruments" target="_blank" rel="noreferrer"><b>tonejs-instruments</b><span>Processed solo samples · CC BY 3.0</span></a>
+          <a href="https://github.com/gleitz/midi-js-soundfonts" target="_blank" rel="noreferrer"><b>FluidR3_GM via midi-js-soundfonts</b><span>Sampled folk / pastoral voices · CC BY 3.0</span></a>
           <a href="https://mediabunny.dev/" target="_blank" rel="noreferrer"><b>Mediabunny</b><span>MP4 recording, conversion and trimming · MPL 2.0</span></a>
           <a href="https://react.dev/" target="_blank" rel="noreferrer"><b>React</b><span>Application UI</span></a>
           <a href="https://vite.dev/" target="_blank" rel="noreferrer"><b>Vite</b><span>Development/build tooling</span></a>
@@ -1212,7 +1242,9 @@ useEffect(()=>{
         <div className="about-actions">
           <a className="primary-link" href="/docs.html" target="_blank" rel="noreferrer">OPEN FULL USER GUIDE ↗</a>
         </div>
-        <p className="fine-print">© 2026 Uthpala Kaushalya. Third-party resources remain subject to their respective licenses and attribution requirements. Keep <code>public/solo-samples/ATTRIBUTION.txt</code> with deployments that include the processed solo samples.</p>
+        <p className="fine-print"><strong>V1.1:</strong> real sampled pastoral/folk voices; sustained SNAP playback for naturally sustaining sampled winds/reeds while the pinch is held; per-voice Volume and Reverb controls; real-sample Orchestral Pulse; functional BPM/meter controls; and final Orchestra/Solo mix faders (defaults 15% / 70%).</p>
+        <p className="fine-print">The pastoral/fantasy palette is a high-level musical influence only. Orchestra / Gesture does not bundle or reproduce music, melodies, MIDI, loops, or recordings from <em>The Lord of the Rings</em> or any other film score.</p>
+        <p className="fine-print">© 2026 Uthpala Kaushalya. Project code is released under the MIT License. Third-party resources remain subject to their own licenses and attribution requirements. Keep both <code>public/solo-samples/ATTRIBUTION.txt</code> and <code>public/folk-samples/ATTRIBUTION.txt</code> with deployments that include those sample libraries.</p>
       </div>}
 
     </aside>}

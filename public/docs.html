@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Orchestra / Gesture — User Guide V1.0</title>
+<title>Orchestra / Gesture — User Guide V1.1</title>
 <style>
 :root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#e9edf4;background:#05080d;line-height:1.58}
 *{box-sizing:border-box}
@@ -39,7 +39,7 @@ kbd{border:1px solid #4a5564;background:#121a26;border-radius:3px;padding:1px 5p
 <body>
 <div class="wrap">
 <nav>
-<h2>USER GUIDE · V1.0</h2>
+<h2>USER GUIDE · V1.1</h2>
 <a href="#overview">1. Overview</a>
 <a href="#start">2. Start the app</a>
 <a href="#screen">3. Screen layout</a>
@@ -51,14 +51,16 @@ kbd{border:1px solid #4a5564;background:#121a26;border-radius:3px;padding:1px 5p
 <a href="#scales">9. Keys & scales</a>
 <a href="#mix">10. Mixer & expression</a>
 <a href="#record">11. Record / preview / trim</a>
-<a href="#settings">12. Settings</a>
-<a href="#samples">13. Sample libraries</a>
-<a href="#performance">14. Performance tips</a>
-<a href="#troubleshooting">15. Troubleshooting</a>
-<a href="#architecture">16. Technical architecture</a>
-<a href="#privacy">17. Privacy</a>
-<a href="#credits">18. Credits</a>
-<a href="#history">19. Version history</a>
+<a href="#folk">12. Pastoral / folk voices</a>
+<a href="#pulse">13. Orchestral Pulse</a>
+<a href="#settings">14. Settings</a>
+<a href="#samples">15. Sample libraries</a>
+<a href="#performance">16. Performance tips</a>
+<a href="#troubleshooting">17. Troubleshooting</a>
+<a href="#architecture">18. Technical architecture</a>
+<a href="#privacy">19. Privacy</a>
+<a href="#credits">20. Credits</a>
+<a href="#history">21. Version history</a>
 </nav>
 
 <main>
@@ -167,7 +169,7 @@ npm run dev</div>
 </table>
 <h3>Global mix trims</h3>
 <p>Settings → Sound contains independent Orchestra Mix and Solo Mix sliders. These are mixer trims; they do not remove the expressive hand-dynamics mapping.</p>
-<p>V1.0 defaults to a stronger orchestra and uses additional section makeup gain plus a master limiter.</p>
+<p>V1.1 defaults to a stronger orchestra and uses additional section makeup gain plus a master limiter.</p>
 
 <h2 id="record">11. Record, preview, trim and download</h2>
 <ol>
@@ -183,28 +185,61 @@ npm run dev</div>
 </ol>
 <div class="note">The trimmed MP4 is created locally in the browser. Accurate trimming re-encodes the selected range, so long recordings may take some time. A progress indicator is shown.</div>
 
-<h2 id="settings">12. Settings reference</h2>
+
+<h2 id="folk">12. Pastoral / folk voices — V1.1</h2>
+<p>V1.1 adds a group of pastoral folk colours designed for gentle fantasy, Celtic-adjacent and acoustic-style improvisation. These voices do not reproduce any copyrighted soundtrack melody or recording.</p>
+<table>
+<tr><th>Voice</th><th>Character</th></tr>
+<tr><td>Whistle</td><td>Sampled whistle colour for bright pastoral leads.</td></tr>
+<tr><td>Pan flute</td><td>Real sampled pan-flute timbre.</td></tr>
+<tr><td>Recorder</td><td>Real sampled recorder.</td></tr>
+<tr><td>Ocarina</td><td>Real sampled ocarina.</td></tr>
+<tr><td>Celtic / folk harp</td><td>Real sampled orchestral harp used as the folk-harp colour.</td></tr>
+<tr><td>Hammered dulcimer</td><td>Real sampled dulcimer.</td></tr>
+<tr><td>Musette / folk accordion</td><td>Real sampled accordion used as the musette/folk reed colour.</td></tr>
+</table>
+<p>These V1.1 voices use real sampled instruments from FluidR3_GM through the open midi-js-soundfonts distribution (CC BY 3.0). They are level-matched to sit near the processed solo instruments.</p>
+
+<h3>Per-instrument volume and reverb</h3>
+<p>Settings → Melody shows a Volume slider and a Reverb slider beside each selected solo voice. Volume is adjustable from 0–150% so naturally quieter samples can be boosted as well as reduced. Both values are stored per voice. Reverb is additional to the broader hall-space control available from the left-hand roll.</p>
+<p>Whistle, pan flute, recorder, ocarina and musette are finite real recordings, so V1.1 refreshes the real sample while a SNAP pinch remains held. These sustaining voices therefore continue sounding until the pinch is released. Plucked voices such as harp and dulcimer are intentionally allowed to decay naturally.</p>
+
+<h2 id="pulse">13. Orchestral Pulse — V1.1</h2>
+<p>The BPM control is now functional through the new Orchestral Pulse performance mode. Sustain mode keeps the original continuous chord. Pulse mode turns the currently displayed left-hand chord into an original algorithmic accompaniment pattern.</p>
+<table>
+<tr><th>Meter</th><th>Pulse grouping</th></tr>
+<tr><td>4/4</td><td>2+2+2+2 eighth-note cells</td></tr>
+<tr><td>2/4</td><td>2+2</td></tr>
+<tr><td>3/4</td><td>Waltz-style three-beat cycle</td></tr>
+<tr><td>6/8</td><td>3+3 pastoral compound pulse</td></tr>
+<tr><td>5/8</td><td>2+3</td></tr>
+<tr><td>7/8</td><td>2+2+3</td></tr>
+<tr><td>9/8</td><td>3+3+3</td></tr>
+</table>
+<p>The accompaniment follows chord changes in real time, uses the selected BPM, and stops on a fist or when the left hand leaves the camera. V1.1 uses short VSCO orchestral samples (staccato/spiccato/pizzicato where available), harp and timpani rather than synthesized beep voices. No melody or audio from a film soundtrack is included.</p>
+
+<h2 id="settings">14. Settings reference</h2>
 <h3>Chords</h3>
 <p>Key, scale, palm/back policy, palm/back inversion and seven-chord overview.</p>
 <h3>Melody</h3>
-<p>Assign a voice to each right-hand pinch channel and change Snap/Glide mode.</p>
+<p>Assign a voice to each right-hand pinch channel, choose Snap/Glide mode, and set a per-voice Volume (0–150%) and Reverb amount. Naturally sustaining sampled folk winds/reeds are refreshed while a SNAP pinch remains held; plucked instruments such as harp and dulcimer decay naturally.</p>
 <h3>Sound</h3>
-<p>Orchestra/Solo global mix trims and expression mapping.</p>
+<p>Orchestra mix and Solo mix are final output faders. V1.1 defaults to Orchestra 15% and Solo 70%. These controls change the final bus levels without changing the hand-expression mapping.</p>
 <h3>Camera</h3>
 <p>720p wide mode, 1080p mode, browser auto mode and hand-tracking rate (18 / 24 / 30 fps).</p>
 <h3>Recording</h3>
 <p>Start/stop recording and reopen the most recent recording review.</p>
 <h3>About</h3>
-<p>Creator information, credits, licenses and a link back to this guide.</p>
+<p>Creator information, social links, V1.1 feature summary, credits, licenses, attribution requirements and a link back to this guide.</p>
 
-<h2 id="samples">13. Sample libraries</h2>
+<h2 id="samples">15. Sample libraries</h2>
 <h3>Orchestra</h3>
 <p>VSCO 2 Community Edition by Versilian Studios. The project uses imported orchestral WAV samples for ensemble sections. VSCO 2 CE is CC0/public-domain licensed.</p>
 <h3>Solo</h3>
 <p>The optional processed solo library comes from <code>nbrosowsky/tonejs-instruments</code>. The samples are CC BY 3.0 and are preferred for supported solo voices because the collection has been processed for browser instrument use.</p>
 <div class="warn note">When deploying processed solo samples, keep <code>public/solo-samples/ATTRIBUTION.txt</code>.</div>
 
-<h2 id="performance">14. Performance tips</h2>
+<h2 id="performance">16. Performance tips</h2>
 <ul>
 <li>Keep hands at a comfortable distance; do not push them close to the lens.</li>
 <li>Use horizontal motion—not camera distance—for dynamics.</li>
@@ -214,7 +249,7 @@ npm run dev</div>
 <li>Use Settings → Sound to balance the global orchestra/solo relationship before performing.</li>
 </ul>
 
-<h2 id="troubleshooting">15. Troubleshooting</h2>
+<h2 id="troubleshooting">17. Troubleshooting</h2>
 <table>
 <tr><th>Problem</th><th>What to try</th></tr>
 <tr><td>No audio</td><td>Press Start again, check browser/site audio permission and Windows output device.</td></tr>
@@ -225,7 +260,7 @@ npm run dev</div>
 <tr><td>Trim export unavailable</td><td>Try a current Chrome/Edge build with browser video/audio encoders available.</td></tr>
 </table>
 
-<h2 id="architecture">16. Technical architecture</h2>
+<h2 id="architecture">18. Technical architecture</h2>
 <div class="flow">Webcam
   ↓
 MediaPipe Hand Landmarker
@@ -244,10 +279,10 @@ Mediabunny
   ├─ live MP4 recording
   └─ browser-local trim conversion</div>
 
-<h2 id="privacy">17. Privacy</h2>
+<h2 id="privacy">19. Privacy</h2>
 <p>Hand tracking and audio generation run in the browser. The webcam frame is used by the hand-tracking model to generate landmarks. Recording is created locally in the browser and is not uploaded by this application merely to create or trim the MP4.</p>
 
-<h2 id="credits">18. Credits</h2>
+<h2 id="credits">20. Credits</h2>
 <div class="credit">
 <div><b>Creator</b><br>Uthpala Kaushalya — independent freelance / fun project.</div>
 <div><b>Interaction inspiration</b><br><a href="https://www.gesture.live/">gesture.live</a>. Independent implementation; no affiliation.</div>
@@ -261,7 +296,7 @@ Mediabunny
 </div>
 <p class="small">Third-party resources remain subject to their original license terms. © 2026 Uthpala Kaushalya for this independent application code/design unless otherwise noted.</p>
 
-<h2 id="history">19. Version history</h2>
+<h2 id="history">21. Version history</h2>
 <table>
 <tr><th>Version</th><th>Main milestone</th></tr>
 <tr><td>0.1–0.3</td><td>Two-hand tracking, gesture chords, VSCO importer.</td></tr>
@@ -271,6 +306,7 @@ Mediabunny
 <tr><td>0.8</td><td>Full-window layout and orchestra/solo mixer trims.</td></tr>
 <tr><td>0.9</td><td>Stronger orchestra, header fix, About/Credits, full documentation, 3-2-1 recording countdown, preview and browser-local MP4 trimming.</td></tr>
 <tr><td><b>1.0</b></td><td><b>First public release.</b></td></tr>
+<tr><td><b>1.1</b></td><td><b>Pastoral folk voices, per-voice reverb, functional BPM, Orchestral Pulse mode and irregular-meter accompaniment.</b></td></tr>
 </table>
 <p class="small">This guide is intended to be updated with each app release as controls and behavior evolve.</p>
 </main>

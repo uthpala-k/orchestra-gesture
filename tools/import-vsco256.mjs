@@ -70,6 +70,9 @@ const instrumentRules = {
   ],
   harp: [
     /harp/i
+  ],
+  timpani: [
+    /timpani/i, /(?:^|[_ -])tmp(?:[_ -]|$)/i, /(?:^|[_ -])timp(?:[_ -]|$)/i
   ]
 }
 
@@ -126,6 +129,45 @@ for(const f of files) {
   grouped[instrument][pitch].push({path:f,name,score:score(name,instrument)})
 }
 
+
+function scorePulse(name,instrument) {
+  const n=name.toLowerCase()
+  let s=0
+
+  // Short orchestral articulations are preferred for rhythmic accompaniment.
+  if(/spic|spicc/.test(n)) s+=150
+  if(/stac|stacc/.test(n)) s+=140
+  if(/pizz/.test(n)) s+=125
+
+  // Harp and timpani are naturally suitable even when filenames don't say staccato.
+  if(instrument==='harp') s+=115
+  if(instrument==='timpani') s+=120
+
+  // Useful dynamics / round-robin choices.
+  if(/(?:^|[_ -])(mf|f)(?:[_ .-]|$)/.test(n)) s+=18
+  if(/_v2|_v3/.test(n)) s+=8
+
+  // Long/special articulations are poor rhythmic sources.
+  if(/sus|sustain|trem|trill|gliss|fx/.test(n)) s-=90
+
+  return s
+}
+
+const pulseGrouped={}
+for(const f of files) {
+  const name=path.basename(f)
+  const instrument=classify(name)
+  const pitch=parsePitch(name)
+  if(!instrument || !pitch) continue
+
+  const ps=scorePulse(name,instrument)
+  if(ps < 60) continue
+
+  pulseGrouped[instrument] ??= {}
+  pulseGrouped[instrument][pitch] ??= []
+  pulseGrouped[instrument][pitch].push({path:f,name,score:ps})
+}
+
 fs.rmSync(outputRoot,{recursive:true,force:true})
 fs.mkdirSync(outputRoot,{recursive:true})
 
@@ -157,6 +199,34 @@ fs.writeFileSync(
   JSON.stringify(manifest,null,2)
 )
 
+const pulseManifest={}
+const pulseRoot=path.join(outputRoot,'pulse')
+fs.mkdirSync(pulseRoot,{recursive:true})
+
+for(const instrument of ['violin','viola','cello','horn','trombone','harp','timpani']) {
+  const groups=pulseGrouped[instrument] || {}
+  const pitches=Object.keys(groups)
+  pulseManifest[instrument]={}
+
+  const dest=path.join(pulseRoot,instrument)
+  fs.mkdirSync(dest,{recursive:true})
+
+  for(const pitch of pitches) {
+    const candidates=groups[pitch].sort((a,b)=>b.score-a.score)
+    const best=candidates[0]
+    const safePitch=pitch.replace('#','s')
+    const targetName=`${instrument}_pulse_${safePitch}.wav`
+    fs.copyFileSync(best.path,path.join(dest,targetName))
+    pulseManifest[instrument][pitch]=targetName
+  }
+}
+
+fs.writeFileSync(
+  path.join(outputRoot,'pulse-manifest.json'),
+  JSON.stringify(pulseManifest,null,2)
+)
+
+
 fs.writeFileSync(
   path.join(outputRoot,'IMPORT_REPORT.txt'),
   [
@@ -166,6 +236,11 @@ fs.writeFileSync(
     `Total WAV files found: ${files.length}`,
     '',
     ...report,
+    '',
+    'REAL ORCHESTRAL PULSE ARTICULATIONS',
+    ...Object.entries(pulseManifest).map(([name,map])=>
+      `${name.padEnd(10)} ${String(Object.keys(map).length).padStart(3)} short-articulation pitches`
+    ),
     '',
     `Unclassified/unpitched files: ${unclassified.length}`,
     '',

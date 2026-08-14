@@ -27,16 +27,16 @@ const SOLO_OPTIONS:{value:SoloName,label:string}[]=[
   {value:'oboe',label:'Oboe'},
   {value:'horn',label:'French horn'},
   {value:'saxophone',label:'Saxophone'},
-  {value:'sopranoSax',label:'Soprano sax*'},
-  {value:'altoSax',label:'Alto sax*'},
-  {value:'tenorSax',label:'Tenor sax*'},
-  {value:'whistle',label:'Whistle · REAL SAMPLE'},
-  {value:'panFlute',label:'Pan flute · REAL SAMPLE'},
-  {value:'recorder',label:'Recorder · REAL SAMPLE'},
-  {value:'ocarina',label:'Ocarina · REAL SAMPLE'},
-  {value:'celticHarp',label:'Celtic / folk harp · REAL SAMPLE'},
-  {value:'hammeredDulcimer',label:'Hammered dulcimer · REAL SAMPLE'},
-  {value:'musette',label:'Musette / folk accordion · REAL SAMPLE'},
+  {value:'sopranoSax',label:'Soprano sax'},
+  {value:'altoSax',label:'Alto sax'},
+  {value:'tenorSax',label:'Tenor sax'},
+  {value:'whistle',label:'Whistle'},
+  {value:'panFlute',label:'Pan flute'},
+  {value:'recorder',label:'Recorder'},
+  {value:'ocarina',label:'Ocarina'},
+  {value:'celticHarp',label:'Celtic / folk harp'},
+  {value:'hammeredDulcimer',label:'Hammered dulcimer'},
+  {value:'musette',label:'Musette / folk accordion'},
   {value:'theremin',label:'Theremin'},
   {value:'saw',label:'Saw'},
   {value:'square',label:'Square'},
@@ -45,6 +45,14 @@ const SOLO_OPTIONS:{value:SoloName,label:string}[]=[
   {value:'acid',label:'Acid'},
   {value:'pulse',label:'Pulse'},
 ]
+const HIGH_FOLK_DEFAULT_OCTAVE=new Set<SoloName>([
+  'whistle','panFlute','recorder','ocarina'
+])
+
+function recommendedVoiceOctave(name:SoloName){
+  return HIGH_FOLK_DEFAULT_OCTAVE.has(name)?1:0
+}
+
 const SCALE_OPTIONS:{value:ScaleName,label:string}[]=[
   {value:'major',label:'Major'},
   {value:'minor',label:'Minor'},
@@ -166,6 +174,7 @@ export default function App(){
   const [palmBackPolicy,setPalmBackPolicy]=useState<PalmBackPolicy>('automatic')
 
   const [fingerVoices,setFingerVoices]=useState<SoloName[]>(['violin','cello','piano','flute'])
+  const [fingerOctaves,setFingerOctaves]=useState<number[]>([0,0,0,0])
   const [soloMode,setSoloMode]=useState<SoloMode>('snap')
   const [soloDynamics,setSoloDynamics]=useState(.65)
   const [soloVibrato,setSoloVibrato]=useState(0)
@@ -210,7 +219,7 @@ export default function App(){
     recording,recordSeconds,rootPc,scale,bpm,performanceMode,meter,lightPlate,sampleMode,gestureDegree,
     currentChord,chordHeight,extensionLevel,chordDynamics,leftRoll,
     harmonySide,surfaceLabel,invertPalmBack,palmBackPolicy,
-    fingerVoices,soloMode,soloDynamics,soloVibrato,rightRoll,soloMidis,soloRawMidi,soloLanePosition,trackingFps
+    fingerVoices,fingerOctaves,soloMode,soloDynamics,soloVibrato,rightRoll,soloMidis,soloRawMidi,soloLanePosition,trackingFps
   })
 
   useEffect(()=>{
@@ -218,13 +227,13 @@ export default function App(){
       recording,recordSeconds,rootPc,scale,bpm,performanceMode,meter,lightPlate,sampleMode,gestureDegree,
       currentChord,chordHeight,extensionLevel,chordDynamics,leftRoll,
       harmonySide,surfaceLabel,invertPalmBack,palmBackPolicy,
-      fingerVoices,soloMode,soloDynamics,soloVibrato,rightRoll,soloMidis,soloRawMidi,soloLanePosition,trackingFps
+      fingerVoices,fingerOctaves,soloMode,soloDynamics,soloVibrato,rightRoll,soloMidis,soloRawMidi,soloLanePosition,trackingFps
     }
   },[
     recording,recordSeconds,rootPc,scale,bpm,performanceMode,meter,lightPlate,sampleMode,gestureDegree,
     currentChord,chordHeight,extensionLevel,chordDynamics,leftRoll,
     harmonySide,surfaceLabel,invertPalmBack,palmBackPolicy,
-    fingerVoices,soloMode,soloDynamics,soloVibrato,rightRoll,soloMidis,soloRawMidi,soloLanePosition,trackingFps
+    fingerVoices,fingerOctaves,soloMode,soloDynamics,soloVibrato,rightRoll,soloMidis,soloRawMidi,soloLanePosition,trackingFps
   ])
 
   useEffect(()=>{
@@ -374,6 +383,12 @@ export default function App(){
     const next=[...fingerVoices]
     next[index]=name
     setFingerVoices(next)
+
+    const nextOctaves=[...fingerOctaves]
+    nextOctaves[index]=recommendedVoiceOctave(name)
+    setFingerOctaves(nextOctaves)
+    stateRef.current.fingerOctaves=nextOctaves
+
     engine.stopSoloFinger(index)
     try{
       setSoloLoading(true)
@@ -398,6 +413,16 @@ export default function App(){
     const level=Math.max(0,Math.min(1.5,value))
     setVoiceVolumes(prev=>({...prev,[name]:level}))
     engine.setVoiceVolume(name,level)
+  }
+
+  function adjustFingerOctave(index:number,delta:number){
+    engine.stopSoloFinger(index)
+    setFingerOctaves(prev=>{
+      const next=[...prev]
+      next[index]=Math.max(-2,Math.min(2,next[index]+delta))
+      stateRef.current.fingerOctaves=next
+      return next
+    })
   }
 
   function switchPerformanceMode(){
@@ -633,10 +658,10 @@ export default function App(){
 
         if(active){
           if(s.soloMode==='snap'){
-            const ok=engine.updateSoloSnap(fi,s.fingerVoices[fi],snapped,Math.max(.82,dyn))
+            const ok=engine.updateSoloSnap(fi,s.fingerVoices[fi],snapped,Math.max(.82,dyn),s.fingerOctaves[fi])
             nextMidis[fi]=ok?snapped:null
           }else{
-            engine.updateSoloGlide(fi,s.fingerVoices[fi],rawMidi,Math.max(.75,dyn))
+            engine.updateSoloGlide(fi,s.fingerVoices[fi],rawMidi,Math.max(.75,dyn),s.fingerOctaves[fi])
             nextMidis[fi]=rawMidi
           }
         }else{
@@ -1113,8 +1138,25 @@ export default function App(){
         {['Index','Middle','Ring','Pinky'].map((label,i)=><div className="row" key={label}>
           <span>{label}</span>
           <select value={fingerVoices[i]} onChange={e=>void changeVoice(i,e.target.value as SoloName)}>
-            {SOLO_OPTIONS.map(v=><option key={v.value} value={v.value}>{v.label}{engine.isPremiumVoice(v.value)?' · PROCESSED':engine.isFolkSampled(v.value)?' · SAMPLED':engine.isVoiceSampled(v.value)?' · WAV':''}</option>)}
+            {SOLO_OPTIONS.map(v=><option key={v.value} value={v.value}>{v.label}</option>)}
           </select>
+          <div className="voice-octave">
+            <span>Octave <b>{fingerOctaves[i]>0?`+${fingerOctaves[i]}`:fingerOctaves[i]}</b></span>
+            <div className="voice-octave-buttons">
+              <button
+                type="button"
+                aria-label={`Lower ${label} voice one octave`}
+                disabled={fingerOctaves[i]<=-2}
+                onClick={()=>adjustFingerOctave(i,-1)}
+              >−</button>
+              <button
+                type="button"
+                aria-label={`Raise ${label} voice one octave`}
+                disabled={fingerOctaves[i]>=2}
+                onClick={()=>adjustFingerOctave(i,1)}
+              >+</button>
+            </div>
+          </div>
           <label className="voice-volume">Volume <b>{Math.round((voiceVolumes[fingerVoices[i]]??engine.getVoiceVolume(fingerVoices[i]))*100)}%</b>
             <input type="range" min="0" max="150"
               value={Math.round((voiceVolumes[fingerVoices[i]]??engine.getVoiceVolume(fingerVoices[i]))*100)}
@@ -1125,7 +1167,9 @@ export default function App(){
               value={Math.round((voiceReverbs[fingerVoices[i]]??engine.getVoiceReverb(fingerVoices[i]))*100)}
               onChange={e=>changeVoiceReverb(fingerVoices[i],+e.target.value/100)}/>
           </label>
-          <span>{soloMidis[i]===null?'—':soloMode==='snap'?midiToNote(soloMidis[i]!):soloMidis[i]!.toFixed(1)}</span>
+          <span>{soloMidis[i]===null?'—':soloMode==='snap'
+            ?midiToNote(soloMidis[i]!+fingerOctaves[i]*12)
+            :(soloMidis[i]!+fingerOctaves[i]*12).toFixed(1)}</span>
         </div>)}
         <button className="wide-button" onClick={()=>{
           engine.stopAllSolo();pinchActiveRef.current=[false,false,false,false];snapLaneIndexRef.current=null
@@ -1242,7 +1286,7 @@ export default function App(){
         <div className="about-actions">
           <a className="primary-link" href="/docs.html" target="_blank" rel="noreferrer">OPEN FULL USER GUIDE ↗</a>
         </div>
-        <p className="fine-print"><strong>V1.1:</strong> real sampled pastoral/folk voices; sustained SNAP playback for naturally sustaining sampled winds/reeds while the pinch is held; per-voice Volume and Reverb controls; real-sample Orchestral Pulse; functional BPM/meter controls; and final Orchestra/Solo mix faders (defaults 15% / 70%).</p>
+        <p className="fine-print"><strong>V1.1:</strong> real sampled pastoral/folk voices; sustained SNAP playback for naturally sustaining sampled winds/reeds while the pinch is held; per-finger Octave −/+ controls (−2 to +2), per-voice Volume and Reverb controls; real-sample Orchestral Pulse; functional BPM/meter controls; and final Orchestra/Solo mix faders (defaults 15% / 70%). Whistle, Pan Flute, Recorder and Ocarina default to +1 octave for a more natural register, but can be adjusted from the Melody panel.</p>
         <p className="fine-print">The pastoral/fantasy palette is a high-level musical influence only. Orchestra / Gesture does not bundle or reproduce music, melodies, MIDI, loops, or recordings from <em>The Lord of the Rings</em> or any other film score.</p>
         <p className="fine-print">© 2026 Uthpala Kaushalya. Project code is released under the MIT License. Third-party resources remain subject to their own licenses and attribution requirements. Keep both <code>public/solo-samples/ATTRIBUTION.txt</code> and <code>public/folk-samples/ATTRIBUTION.txt</code> with deployments that include those sample libraries.</p>
       </div>}

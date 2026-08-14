@@ -45,7 +45,6 @@ const SAMPLED_FOLK=new Set<SoloName>([
 const SUSTAINING_FOLK=new Set<SoloName>([
   'whistle','panFlute','recorder','ocarina','musette'
 ])
-
 const FOLK_SUSTAIN_REFRESH_MS=1500
 
 const SOLO_GAIN_DB:Partial<Record<SoloName,number>>={
@@ -799,6 +798,10 @@ export class OrchestraEngine {
     else this.hat.triggerAttackRelease('16n',Tone.now(),velocity*.45)
   }
 
+  private soloSoundingMidi(_voice:SoloName,midi:number,octaveShift=0){
+    return midi+Math.max(-2,Math.min(2,octaveShift))*12
+  }
+
   private releaseSnap(finger:number){
     const active=this.activeSnap[finger]
     if(!active)return
@@ -809,11 +812,12 @@ export class OrchestraEngine {
     delete this.activeSnap[finger]
   }
 
-  updateSoloSnap(finger:number,voice:SoloName,midi:number,velocity=.75){
+  updateSoloSnap(finger:number,voice:SoloName,midi:number,velocity=.75,octaveShift=0){
     const instrument=this.soloVoices.get(voice) as any
     if(!instrument)return false
 
-    const note=midiToNote(midi)
+    const soundingMidi=this.soloSoundingMidi(voice,midi,octaveShift)
+    const note=midiToNote(soundingMidi)
     const current=this.activeSnap[finger]
     const now=performance.now()
 
@@ -857,10 +861,11 @@ export class OrchestraEngine {
     return synth
   }
 
-  updateSoloGlide(finger:number,voice:SoloName,midiFloat:number,velocity=.75){
+  updateSoloGlide(finger:number,voice:SoloName,midiFloat:number,velocity=.75,octaveShift=0){
     this.releaseSnap(finger)
     const synth=this.ensureGlideVoice(finger,voice)
-    const freq=Tone.Frequency(midiFloat,'midi').toFrequency()
+    const soundingMidi=this.soloSoundingMidi(voice,midiFloat,octaveShift)
+    const freq=Tone.Frequency(soundingMidi,'midi').toFrequency()
     const active=this.activeGlide[finger]
     if(!active||active.voice!==voice){
       this.stopSoloGlide(finger)

@@ -96,7 +96,9 @@ in gleitz/midi-js-soundfonts and are licensed CC BY 3.0. Run:
 npm run install:folk-samples
 ```
 
-Settings -> Melody includes a reverb slider for every selected voice.
+Settings -> Melody includes per-finger **Octave −/+** controls plus per-voice
+**Volume** and **Reverb** controls. Octave can be shifted from −2 to +2 for
+each of the four pinch channels.
 
 The BPM control now drives **Orchestral Pulse**, a real-sample accompaniment engine. The patterns are original, but the sound comes from imported VSCO short articulations rather than oscillator beeps. Supported meters are:
 
@@ -123,6 +125,11 @@ The final V1.1 behavior also includes:
 - sampled Whistle, Pan Flute, Recorder, Ocarina and Musette sustain for as long
   as a SNAP pinch is held by periodically refreshing the finite real recording;
 - naturally plucked/struck voices such as Harp and Dulcimer still decay;
+- a per-finger **Octave −/+** control from −2 to +2 in Settings -> Melody;
+- Whistle, Pan Flute, Recorder and Ocarina default to **+1 octave**, while the
+  performer can freely move each of the four assigned finger voices up/down;
+- instrument dropdowns show clean instrument names only, without processing
+  or sample-source suffixes;
 - a per-voice **Volume** control (0–150%) beside per-voice Reverb in
   Settings -> Melody;
 - Settings -> Sound defaults to **Orchestra 15%** and **Solo 70%**;

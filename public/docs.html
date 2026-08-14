@@ -68,7 +68,7 @@ kbd{border:1px solid #4a5564;background:#121a26;border-radius:3px;padding:1px 5p
 <div class="kicker">GESTURE-CONTROLLED CINEMATIC MUSIC IN THE BROWSER</div>
 <h1>Orchestra / Gesture</h1>
 <p>A two-hand performance instrument: conduct orchestral harmony with the left hand and play expressive solo voices with the right hand.</p>
-<span class="version">Documentation version 1.0 · August 2026</span>
+<span class="version">Documentation version 1.1 · August 2026</span>
 <p class="small">Creator: Uthpala Kaushalya · independent freelance / fun project. Interaction concept influenced by gesture.live; no affiliation.</p>
 </section>
 
@@ -200,9 +200,11 @@ npm run dev</div>
 </table>
 <p>These V1.1 voices use real sampled instruments from FluidR3_GM through the open midi-js-soundfonts distribution (CC BY 3.0). They are level-matched to sit near the processed solo instruments.</p>
 
-<h3>Per-instrument volume and reverb</h3>
-<p>Settings → Melody shows a Volume slider and a Reverb slider beside each selected solo voice. Volume is adjustable from 0–150% so naturally quieter samples can be boosted as well as reduced. Both values are stored per voice. Reverb is additional to the broader hall-space control available from the left-hand roll.</p>
-<p>Whistle, pan flute, recorder, ocarina and musette are finite real recordings, so V1.1 refreshes the real sample while a SNAP pinch remains held. These sustaining voices therefore continue sounding until the pinch is released. Plucked voices such as harp and dulcimer are intentionally allowed to decay naturally.</p>
+<h3>Per-finger octave, volume and reverb</h3>
+<p>Settings → Melody gives each of the four pinch channels its own <b>Octave −/+</b> control from −2 to +2 octaves. The octave setting belongs to that finger slot, so the four simultaneously assigned instruments can sit in different registers.</p>
+<p>Whistle, Pan Flute, Recorder and Ocarina default to <b>+1 octave</b> because their higher register sounds more natural in the shared melody-lane system. Selecting another instrument resets that slot to the recommended default, and the performer can immediately change it with the −/+ buttons.</p>
+<p>The same Melody row also provides a Volume slider (0–150%) and a Reverb slider (0–100%). Volume and reverb are stored per voice. Reverb is additional to the broader hall-space control available from the left-hand roll.</p>
+<p>Whistle, Pan Flute, Recorder, Ocarina and Musette are finite real recordings, so V1.1 refreshes the real sample while a SNAP pinch remains held. These sustaining voices therefore continue sounding until the pinch is released. Plucked voices such as harp and dulcimer are intentionally allowed to decay naturally.</p>
 
 <h2 id="pulse">13. Orchestral Pulse — V1.1</h2>
 <p>The BPM control is now functional through the new Orchestral Pulse performance mode. Sustain mode keeps the original continuous chord. Pulse mode turns the currently displayed left-hand chord into an original algorithmic accompaniment pattern.</p>
@@ -222,7 +224,7 @@ npm run dev</div>
 <h3>Chords</h3>
 <p>Key, scale, palm/back policy, palm/back inversion and seven-chord overview.</p>
 <h3>Melody</h3>
-<p>Assign a voice to each right-hand pinch channel, choose Snap/Glide mode, and set a per-voice Volume (0–150%) and Reverb amount. Naturally sustaining sampled folk winds/reeds are refreshed while a SNAP pinch remains held; plucked instruments such as harp and dulcimer decay naturally.</p>
+<p>Assign a voice to each right-hand pinch channel, adjust that finger's octave from −2 to +2 with the −/+ buttons, choose Snap/Glide mode, and set per-voice Volume (0–150%) and Reverb. Whistle, Pan Flute, Recorder and Ocarina start at +1 octave. Naturally sustaining sampled folk winds/reeds are refreshed while a SNAP pinch remains held; plucked instruments such as harp and dulcimer decay naturally.</p>
 <h3>Sound</h3>
 <p>Orchestra mix and Solo mix are final output faders. V1.1 defaults to Orchestra 15% and Solo 70%. These controls change the final bus levels without changing the hand-expression mapping.</p>
 <h3>Camera</h3>
@@ -306,7 +308,7 @@ Mediabunny
 <tr><td>0.8</td><td>Full-window layout and orchestra/solo mixer trims.</td></tr>
 <tr><td>0.9</td><td>Stronger orchestra, header fix, About/Credits, full documentation, 3-2-1 recording countdown, preview and browser-local MP4 trimming.</td></tr>
 <tr><td><b>1.0</b></td><td><b>First public release.</b></td></tr>
-<tr><td><b>1.1</b></td><td><b>Pastoral folk voices, per-voice reverb, functional BPM, Orchestral Pulse mode and irregular-meter accompaniment.</b></td></tr>
+<tr><td><b>1.1</b></td><td><b>Real pastoral/folk samples, sustained sampled winds/reeds, per-finger octave −/+ controls, per-voice volume/reverb, functional BPM, real-sample Orchestral Pulse, irregular meters and final orchestra/solo mix controls.</b></td></tr>
 </table>
 <p class="small">This guide is intended to be updated with each app release as controls and behavior evolve.</p>
 </main>
